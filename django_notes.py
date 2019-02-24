@@ -155,16 +155,15 @@ query = request.GET.get("name_of_html_form_tag")
 
 # If we'd like to returning an HttpResponse, which returns a string to the webpage we've to import "HttpResponse" like so
 from django.http import HttpResponse
+# And use it like this
+def function_name(request):
+    return HttpResponse("<h1> Hello Ayman </h1>")
 
 # Import 404 page from django
 from django.http import Http404
 
 # Import Json Response
 from django.http import JsonResponse
-
-# And use it like this
-def function_name(request):
-    return HttpResponse("<h1> Hello Ayman </h1>")
 
 # If we'd like to send our data to some template's files we have to import "render" and import "redirect" to using url's name in the views.py like this
 from django.shortcuts import render, redirect
@@ -180,6 +179,15 @@ return render(request, 'page.html', context)
 # import django permission
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
+# To import our own permissions
+from .permissions import OurPermissionName
+
+# And we can use it like this
+class ListView(ListAPIView):
+    queryset = ModelName.objects.all()
+    serializer_class = ListSerializer
+    permission_classes = [AllowAny, OurPermissionName]
+
 # Import it to help us using "rest_framework"
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView, RetrieveUpdateAPIView, DestroyAPIView
 
@@ -188,6 +196,34 @@ from .forms import ModelNameForm
 
 # Import serializers.py and it's classes
 from .serializers import ModelNameSerializer
+
+# Import SearchFilter to use it with apis restframework
+from rest_framework.filters import SearchFilter
+
+# And use it like this
+class ListView(ListAPIView):
+    queryset = Model.objects.all()
+    serializer_class = ModelListSerializer
+    filter_backends = [SearchFilter,]
+    search_fields = ['field_1', 'field_2',]
+
+# Then we can use it in the browser in the url bar like this
+http://127.0.0.1:8000/api/list/?search=<WHAT_YOU_WANT_TO_SEARCH_FOR>
+
+# Import OrderingFilter to use it with apis restframework
+from rest_framework.filters import OrderingFilter
+
+# And use it like this
+class ListView(ListAPIView):
+    queryset = Model.objects.all()
+    serializer_class = ModelListSerializer
+    filter_backends = [OrderingFilter,]
+
+# Then we can use it in the browser in the url bar like this
+http://127.0.0.1:8000/api/list/?ordering=field_name
+# Or
+http://127.0.0.1:8000/api/list/?ordering=-field_name
+
 
 # And use it like this for "object_list"
 class ListView(ListAPIView):
@@ -215,7 +251,6 @@ class UpdateView(RetrieveUpdateAPIView):
 
 class DeleteView(DestroyAPIView):
     queryset = ModelName.objects.all()
-    serializer_class = DestroyAPIView
     lookup_field = 'id'
     lookup_url_kwarg = 'object_id'
 
@@ -317,9 +352,19 @@ from rest_framework import serializers
 from .models import ModelName
 
 class ListSerializer(serializers.ModelSerializer):
+
+    # We use "HyperlinkedIdentityField" method to display a link that take us to the another url
+    detail = serializers.HyperlinkedIdentityField(
+        view_name = "api-restaurant-detail",
+        lookup_field = "id",
+        lookup_url_kwarg = "restaurant_id",
+    )
+
     class Meta:
         model = ModelName
         fields = ['field_1', 'field_2', 'field_3',]
+
+
 
 
 
@@ -327,7 +372,17 @@ class ListSerializer(serializers.ModelSerializer):
 
 """ permissions.py """
 
+# To create our own permissions
+from rest_framework.permissions import BasePermission
 
+class OurPermissionName(BasePermission):
+    message = "Write your message here."
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_staff or (obj.author == request.user):
+            return True
+        else:
+            return False
 
     
 
